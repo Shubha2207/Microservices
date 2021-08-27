@@ -3,6 +3,7 @@ package com.example.moviecatalogservice.resources;
 import com.example.moviecatalogservice.models.CatalogItem;
 import com.example.moviecatalogservice.models.Movie;
 import com.example.moviecatalogservice.models.Rating;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,12 +19,16 @@ import java.util.stream.Collectors;
 @RequestMapping("/catalog")
 public class MovieCatalogResource {
 
+    @Autowired
+    private RestTemplate restTemplate;
+    // only single object is created and used
+    // function with @Bean annotation provides the object to this reference
+
 
     @RequestMapping("/{userId}")
     public List<CatalogItem> getCatalogItems(@PathVariable("userId") String userId) {
 
-        // RestTemplate allows us to make rest call to another api
-        RestTemplate restTemplate = new RestTemplate();
+
 
         List<Rating> ratings = Arrays.asList(
                 new Rating("AvengerIW", 4),
