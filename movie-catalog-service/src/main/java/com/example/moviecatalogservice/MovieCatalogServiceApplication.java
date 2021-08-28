@@ -16,11 +16,6 @@ public class MovieCatalogServiceApplication {
 	// This is kind of a producer
 	// other annotation which @Autowired will check for the @Bean to get the object of RestTemplate
 
-	@Bean
-	public WebClient.Builder getWebClient(){
-		return WebClient.builder();
-	}
-
 	public static void main(String[] args) {
 		SpringApplication.run(MovieCatalogServiceApplication.class, args);
 	}

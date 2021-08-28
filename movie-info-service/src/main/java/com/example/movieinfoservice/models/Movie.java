@@ -1,9 +1,15 @@
 package com.example.movieinfoservice.models;
 
+
+
 public class Movie {
 
     private String movieId;
     private String description;
+
+    public Movie(){
+
+    }
 
     public Movie(String movieId, String description) {
         this.movieId = movieId;

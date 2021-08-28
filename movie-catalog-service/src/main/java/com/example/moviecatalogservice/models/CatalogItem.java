@@ -6,6 +6,11 @@ public class CatalogItem {
     private String description;
     private int rating;
 
+    public CatalogItem(){
+
+    }
+
+
     public CatalogItem(String name, String description, int rating) {
         this.name = name;
         this.description = description;
