@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
+
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,7 +34,7 @@ public class MovieCatalogResource {
 //                new Rating("AvengerEG", 5)
 //        );
 
-        UserRating userRating = restTemplate.getForObject("http://localhost:8083/ratings/users/"+userId, UserRating.class);
+        UserRating userRating = restTemplate.getForObject("http://eureka-client-movie-rating-service/ratings/users/"+userId, UserRating.class);
 
         // iterating through list of ratings
 //        return userRating.getRatingList().stream().map(rating -> {
@@ -49,7 +49,7 @@ public class MovieCatalogResource {
         Catalog catalog = new Catalog();
 
         userRating.getRatingList().forEach(rating -> {
-            Movie movie = restTemplate.getForObject("http://localhost:8082/movies/"+rating.getMovieId(),Movie.class);
+            Movie movie = restTemplate.getForObject("http://eureka-client-movie-info-service/movies/"+rating.getMovieId(),Movie.class);
 
             catalog.setSingleCatalogItem(new CatalogItem(rating.getMovieId(),movie.getDescription(),rating.getRating()));
 
