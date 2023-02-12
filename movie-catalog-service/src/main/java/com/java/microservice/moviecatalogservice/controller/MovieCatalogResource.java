@@ -53,8 +53,17 @@ public class MovieCatalogResource {
                 "http://localhost:8083/ratings/users/"+userID,
                 UserRating.class);
          */
+
+        /*
+        // taking value from property file
         UserRating userRating = restTemplate.getForObject(
                 RATING_DATA_SERVICE_URL+userID,
+                UserRating.class);
+         */
+
+        // Service-discovery enabled so no need to fetch value from property file
+        UserRating userRating = restTemplate.getForObject(
+                "http://rating-data-service/ratings/users/"+userID,
                 UserRating.class);
 
 
@@ -118,7 +127,10 @@ public class MovieCatalogResource {
         List<CatalogItem> userCatalogItem = new ArrayList<>();
 
         for (Rating rating:ratings) {
-            Movie movie = restTemplate.getForObject(MOVIE_INFO_SERVICE_URL+rating.getMovieID(),Movie.class);
+//            Movie movie = restTemplate.getForObject(MOVIE_INFO_SERVICE_URL+rating.getMovieID(),Movie.class);
+
+            // since eureka service discovery is enabled, we can directly call the service using just the name of that service
+            Movie movie = restTemplate.getForObject("http://movie-info-service/movies/"+rating.getMovieID(),Movie.class);
             CatalogItem catalogItem = new CatalogItem(movie.getName(), movie.getDescription(), rating.getRating());
             userCatalogItem.add(catalogItem);
         }

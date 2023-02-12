@@ -16,7 +16,60 @@ Java Frameworks for Microservices
 Spring Boot, Oracle Helidon, AxonIQ, DropWizard, Quarkus
 
 
-### Communication and Discovery
+### Communication and Service Discovery
+
++ Why hardcoded URLs are bad??
+changes in url, requires code updates
+Dynamic URLs in the cloud
+Load Balancing
+Multiple Environments
+
++ Discovery Server
+When application starts, it registers itself in discovery server registry.
+if consumer service will go to discovery-server to get the address of producer service and then make a it is client side service discovery
+if cosumer service provides message to discovery-server and then discovery-server passes that to producer service then it's server-side service discovery.
+
+Spring Cloud uses client-side-service-discovery
+Technology: Eureka
+Netflix OSS products used for microservices are Eureka, Ribbon, Hysterix, Zuul
+
+To make spring-application to work as a Eureka server, we need to add eureka-server dependency in pom and add @EnableEurekaServer annontaiton to main class.
+
++ Common Issues
+
+> Could not transfer artifacts from/to central maven repo
+Try force refreshing your dependencies. Specifying -U does that
+```cmd
+mvn clean install -U
+```
+
+> Cannot resolve org.springframework.cloud:spring-cloud-starter-netflix-eureka-server:unknown
+```xml
+<!-- add version to the dependecy -->
+<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+			<version>2.2.10.RELEASE</version>
+</dependency>
+```
+
+And reload the project 
+> right click -> maven -> reload project
+
+Check the Compatiblity between Spring Cloud and Spring Boot [here](https://spring.io/projects/spring-cloud)
+
+> Eureka server register to it's own registry
+Add following properties
+```properties
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+```
+
++ @LoadBalanced Annotation
+the bean we created for resttemplate will call the rest service.
+since we have configured eureka server, it would first go to eureka servier and get the address of target service.
+though it's a client-side-service discovery, the resttemplate provides an abstraction over this and it seems like server-side-discovery is going on.
+So to enable this we need add @LoadBalanced annotation to resttemplate and simply call the service with it's name.
 
 
 ### Application Details
@@ -109,7 +162,7 @@ rating-data-service.base.url=http://localhost:8083/ratings/users/
 
 ```java
 @Value("${rating-data-service.base.url}")
-    private String RATING_DATA_SERVICE_URL;
+private String RATING_DATA_SERVICE_URL;
 ```
 
-User @Value annotation, that way if in future there is any chage, you just have make update in application.properties file
+Use @Value annotation, that way if in future there is any chage, you just have make update in application.properties file
