@@ -15,6 +15,8 @@ use SOA to reuse services in different systems or combine several independent se
 Java Frameworks for Microservices
 Spring Boot, Oracle Helidon, AxonIQ, DropWizard, Quarkus
 
+[12 Factos App - Idel Microservices Architecture](https://12factor.net/)
+
 
 ### 1. Communication and Service Discovery
 
@@ -226,6 +228,226 @@ version history
 real time management of configs without stopping the app
 
 + application.properties
+
+Use @Value annotation to get values from property file
+
+// application.properties
+```properties
+key=this is the key value
+```
+
+```java
+@Value("${key}")
+private String key_from_property;
+```
+
+You can reuse values in application.properties file
+
+```properties
+key1=value1
+key2=value of key1 is ${key1}
+```
+
+Using application.properties helps us to keep all config in single place and avoiding harcoding but still the configs are not externalized from codebase. If we have to update the config, will have to rebuild the entire project since property file is also part of app jar.
+
++ Use external property sources
+
+You can create external application.properties file in target folder, so when you run the jar, the properties of inner application.properties file will be overwritten by external application.properties file.
+
+You can overwrite the property of external application.properties by passing property in command line.
+
+```cmd
+java -jar application-0.1.0-snapshot.jar --server.port=9090
+```
+
++ @Value annotation tricks
+
+1. Assign value to variable
+
+```java
+@Value("this is string value")
+private String str;
+```
+
+2. Set default value for property
+
+if api.key is not present in property file, use default value provided
+
+```java
+@Value("${api.key: default_value}")
+private String str;
+```
+
+3. Get list of values from property file
+
+```properties
+app.list.values=abc,xyx,pqr
+```
+```java
+@Value("${app.list.values}")
+private List<String> list;
+```
+
+4. Get nested key values
+
+```properties
+dbconfigs={connectionString: 'https://dburl.com', userName: 'app_login', password: 'login@123'}
+```
+
+We will use #, so that spring will conside the dbconfigs as a expression also known as spring-expression-language
+
+```java
+@Value("#{${dbconfigs}}")
+private Map<String, String> dbconfigs;
+```
+
++ @ConfigurationProperties Annotaiton
+
+retrieve group of configs at once from property file.
+
+```properties
+db.connectionString=https://dburl.com
+db.userName=app_login
+db.password=app_pass
+db.port=5671
+```
+
+All these properties can be grouped as db properties. Hence we can create a bean for them and use the bean in controller class
+
+```java
+@Configuration
+@ConfigurationProperties("db")
+public class DbSettings{
+  private String connectionString;
+  private String userName;
+  private String password;
+  private int port;
+
+  // constructors 
+  // getters and setters
+}
+```
+
+```java
+@Autowired
+private DbSettings dbSettings;
+```
+
+all values from property file would be in the dbSettings object and you can retrieve using getters
+
++ Spring Boot Actuator
+
+To get the details of configuration used by application, add this property to enable actuator to do that
+
+```properties
+// Expose all the management endpoints
+management.endpoints.web.exposure.include=*
+```
+
+GET > localhost:8080/actuator/configprops
+
++ Configuration management in yaml file
+
+yaml has benefits of nesting
+
+> application.properties
+
+```properties
+app.name=MyApp
+app.port=8081
+app.image.repo=docker
+app.image.tag=0.1.0
+```
+
+Repetitive keys in the property with .properties file.
+
+> application.yaml
+
+```yaml
+app:
+  name: "MyApp"
+  port: 8081
+  image:
+    repo: "docker"
+    tag: "0.1.0"
+```
+
+Use spaces for indentation instead of tabs
+
++ Spring Profiles
+
+```yaml
+spring.profiles.active: test
+```
+default profile is always active profile, so you can put this property in default property file to tell spring that what the active profile really is
+eg. application-<profile>.extension
+
+you can also provide this value in cli
+> java -jar app-snapshot.jar --spring.profiles.active=test
+
+you can also restrict spring from initializing bean by adding @Profile annotation.
+eg. @Profile("dev") annotation on bean class allows the class to be instantiated only for dev profile
+
++ Environment Object [Not Recommended]
+
+Spring provides Environment class which consists for methods which can provide details regarding environment
+
+```java
+@Autowired
+private Environment env;
+
+@RequestMapping("/envDetails")
+public String getEnvDetails(){
+  return env.toString();
+}
+```
+
++ **Spring Cloud Config Server**
+
+Config as a microservice
+Tools: Apache Zookeeper, ETCD, Hashicorp Consul, Spring Cloud Config Server
+
+Spring Cloud Config Server can connect to Git-Repo/SVN/Hashicorp Vault to fetch the properties.
+
+So without rebuilding the application, we can upate the configs, we just have to push the new configs to git repo and config server will fetch new configs.
+Also provides version control since configs are stored in git repo.
+
+To create config-server
+
+Add spring-boot config-server dependency.
+Add @EnableConfigServer annotation to main class.
+Add spring.cloud.config.server.git.uri property, and provide the location of property file either local or remote git repo.
+Also provide the branch name details spring.cloud.config.server.git.default-label=master
+
+Access the config-server using below url
+> http://localhost:8888/<file-name>/<profile>
+
+Even if you make any change to property file in git-repo, you don't have to restart config-server. It's always fetch the latest props
+
+To create cloud config-client
+
+Add spring-cloud-starter-config dependency
+Add the location of spring cloud config server in property file
+spring.cloud.config.uri=http://localhost:8888
+
+When a microservice gets start, it will make call to config-server and retrieve all the props.
+
+if you want to add service specific props, then name the props file by the name of that microservice. This will allow us have props which service specific eg. server port etc.
+
++ Dynamic Configs Update for cloud-config-client
+
+In case of cloud-config-client, the props don't get updated for client even if config-server is always updated.
+So to get the latest props without restart the service, 
+Add Actuator dependency, which provide an endpoint to which when we make post call 
+
+> POST http://localhost:8083/actuator/refresh
+
+it refreshes all the configs for particular bean which annoted with @RefreshScope annotation
+
++ Security for configurations
+
+use Spring security with spring-cloud-config-server, so that only authorized services get access to configs.
+use /encrypt and /decrypt functionality of config-server which work with JCE(java cryptography extension), to add or fetch the configs from git securely
 
 ### Application Details
 
