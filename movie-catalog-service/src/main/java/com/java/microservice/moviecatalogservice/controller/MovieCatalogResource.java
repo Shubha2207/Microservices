@@ -1,6 +1,7 @@
 package com.java.microservice.moviecatalogservice.controller;
 
 import com.java.microservice.moviecatalogservice.model.*;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.WebApplicationInitializer;
@@ -35,6 +36,7 @@ public class MovieCatalogResource {
     private String MOVIE_INFO_SERVICE_URL;
 
     @GetMapping("/{userID}")
+    @HystrixCommand(fallbackMethod = "getFallbackCatalogItems")
     public UserCatalogItem getCatalogItems(@PathVariable("userID") String userID){
 
 //        RestTemplate restTemplate = new RestTemplate();
@@ -61,21 +63,14 @@ public class MovieCatalogResource {
                 UserRating.class);
          */
 
-        // Service-discovery enabled so no need to fetch value from property file
-        UserRating userRating = restTemplate.getForObject(
-                "http://rating-data-service/ratings/users/"+userID,
-                UserRating.class);
-
-
+        
         // get info of each movie from list of movieids
 //        List<Movie> movies = Arrays.asList();
 //        ratings.stream().map(
 //                rating -> movies.add(new Movie(rating.getMovieID(),"Transformer","Scifi Movie"))
 //
 //        );
-
-
-
+        
         // consolidate the result
 
         /*
@@ -111,9 +106,7 @@ public class MovieCatalogResource {
         }).collect(Collectors.toList());
         */
 
-        // taking data from userRating object
-        List<Rating> ratings = userRating.getUserRatings();
-
+        
         // Not a good practice to return a list
 //        return ratings.stream().map(rating ->
 //        {
@@ -122,6 +115,14 @@ public class MovieCatalogResource {
 //            // consolidate the result
 //            return new CatalogItem(movie.getName(),movie.getDescription(),rating.getRating());
 //        }).collect(Collectors.toList());
+
+        // Service-discovery enabled so no need to fetch value from property file
+        UserRating userRating = restTemplate.getForObject(
+                "http://rating-data-service/ratings/users/"+userID,
+                UserRating.class);
+
+        // taking data from userRating object
+        List<Rating> ratings = userRating.getUserRatings();
 
         // return UserCatalogItem object
         List<CatalogItem> userCatalogItem = new ArrayList<>();
@@ -137,5 +138,10 @@ public class MovieCatalogResource {
 
         return new UserCatalogItem(userID,userCatalogItem);
 
+    }
+
+    public UserCatalogItem getFallbackCatalogItems(@PathVariable("userID") String userID){
+        UserCatalogItem userCatalogItem = new UserCatalogItem(userID, new ArrayList<CatalogItem>());
+        return userCatalogItem;
     }
 }

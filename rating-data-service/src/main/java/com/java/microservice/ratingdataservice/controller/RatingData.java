@@ -23,8 +23,10 @@ public class RatingData {
     @GetMapping("/users/{userID}")
     public UserRating getUserRatings(@PathVariable("userID") String userID){
         List<Rating> ratings = Arrays.asList(
-                new Rating("A1020",3.5),
-                new Rating("B2233",4)
+                new Rating("550",3.5),
+                new Rating("551",4),
+                new Rating("552",3.5),
+                new Rating("553",4)
         );
         // return ratings;
         // return list is a bad practice becuase if in future you need add new filds to object, you cannot do that
